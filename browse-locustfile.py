@@ -1,7 +1,6 @@
-from locust import task, run_single_user
-from locust import FastHttpUser
+from locust import task, run_single_user, FastHttpUser
 
-class browse(FastHttpUser):
+class Browse(FastHttpUser):
     host = "http://localhost:5000"
     default_headers = {
         "Accept-Encoding": "gzip, deflate, br, zstd",
@@ -11,19 +10,21 @@ class browse(FastHttpUser):
     }
 
     @task
-    def t(self):
+    def browse_endpoint(self):
         with self.client.get(
             "/browse",
             headers={
+                **self.default_headers,
                 "Accept": "application/json",
                 "Host": "localhost:5000",
             },
             catch_response=True,
-        ) as resp:
-            if resp.status_code == 200:
-                resp.success()
+        ) as response:
+            if response.status_code == 200:
+                response.success()
             else:
-                resp.failure(f"Failed with status code {resp.status_code}")
+                response.failure(f"Failed with status code {response.status_code}")
 
-if _name_ == "_main_":
-    run_single_user(browse)
+if __name__ == "__main__":
+    run_single_user(Browse)
+

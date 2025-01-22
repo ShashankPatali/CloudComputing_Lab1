@@ -1,15 +1,14 @@
-from locust import task, run_single_user
-from locust import FastHttpUser
+from locust import task, run_single_user, FastHttpUser
 from insert_product import login
 
-class add_to_cart(FastHttpUser):
-    def _init_(self, environment):
-        super()._init_(environment)
+class AddToCart(FastHttpUser):
+    def __init__(self, environment):
+        super().__init__(environment)
         self.username = "test123"
         self.password = "test123"
         cookies = login(self.username, self.password)
         self.token = cookies.get("token")
-    
+
     host = "http://localhost:5000"
     default_headers = {
         "Accept-Encoding": "gzip, deflate, br, zstd",
@@ -19,20 +18,21 @@ class add_to_cart(FastHttpUser):
     }
 
     @task
-    def t(self):
+    def view_cart(self):
         with self.client.get(
             "/cart",
             headers={
+                **self.default_headers,
                 "Accept": "application/json",
                 "Cookies": f"token={self.token}",
                 "Host": "localhost:5000",
             },
             catch_response=True,
-        ) as resp:
-            if resp.status_code == 200:
-                resp.success()
+        ) as response:
+            if response.status_code == 200:
+                response.success()
             else:
-                resp.failure(f"Failed with status code {resp.status_code}")
+                response.failure(f"Failed with status code {response.status_code}")
 
-if _name_ == "_main_":
-    run_single_user(add_to_cart)
+if __name__ == "__main__":
+    run_single_user(AddToCart)
